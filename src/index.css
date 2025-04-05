@@ -1,0 +1,327 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 215 83% 38%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 215 83% 38%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 215 83% 38%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+  
+  .print-preview {
+    background-color: #fff;
+    padding: 40px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    
+    .print-section, .print-section * {
+      visibility: visible;
+    }
+    
+    .print-section {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+    }
+    
+    .no-print {
+      display: none !important;
+    }
+  }
+}
+
+/* Fix for dark mode dropdown options */
+.dark select option {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+}
+
+.dark .bg-white {
+  background-color: #1f2937;
+}
+
+/* Fix for dark mode text in dropdowns and selects */
+.dark select,
+.dark .select,
+.dark [data-radix-select-trigger] {
+  color: white;
+  background-color: var(--input);
+  border-color: var(--border);
+}
+
+.dark [data-radix-select-content] {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border-color: var(--border);
+}
+
+.dark [data-radix-select-item] {
+  color: var(--popover-foreground);
+}
+
+.dark [data-radix-select-item]:hover {
+  background-color: var(--accent);
+}
+
+/* Dark mode fixes for client and invoice lists */
+.dark tr.hover\:bg-gray-50:hover {
+  background-color: #374151 !important; /* darker gray for hover in dark mode */
+  color: white !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #1f2937 !important; /* dark background for table headers */
+  color: white !important;
+}
+
+.dark .bg-white {
+  background-color: #111827 !important; /* dark background for tables */
+}
+
+.dark .text-gray-500 {
+  color: #9ca3af !important; /* lighter gray for text in dark mode */
+}
+
+.dark .text-gray-700 {
+  color: #e5e7eb !important; /* almost white for text in dark mode */
+}
+
+.dark .text-gray-900 {
+  color: #f3f4f6 !important; /* white for headings in dark mode */
+}
+
+/* Fix for table in dark mode */
+.dark tbody.bg-white {
+  background-color: #1f2937 !important;
+}
+
+.dark tbody.divide-gray-200 > tr {
+  border-color: #374151 !important;
+}
+
+/* Fix for tax % input overlap */
+.tax-input-container {
+  position: relative;
+}
+
+.tax-input-container input {
+  padding-right: 25px !important; /* Make more room for the % symbol */
+}
+
+.tax-percent-symbol {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Professional Invoice Preview Styling */
+.invoice-preview {
+  font-family: 'Inter', sans-serif;
+}
+
+.dark .invoice-preview {
+  color: #f3f4f6 !important;
+}
+
+.dark .invoice-preview .bg-white {
+  background-color: #1f2937 !important;
+}
+
+.dark .invoice-preview .text-gray-600,
+.dark .invoice-preview .text-gray-500 {
+  color: #d1d5db !important;
+}
+
+.dark .invoice-preview .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+.dark .invoice-preview .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+/* Fix for charts in dark mode */
+.dark .recharts-text {
+  fill: #e5e7eb !important;
+}
+
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: #374151 !important;
+}
+
+.dark .recharts-legend-item-text {
+  color: #e5e7eb !important;
+}
+
+/* Classes for professional invoice design */
+.invoice-modern {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.invoice-header {
+  background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%);
+  color: white;
+  padding: 2rem;
+  position: relative;
+}
+
+.dark .invoice-header {
+  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+}
+
+.invoice-logo-section {
+  margin-bottom: 1.5rem;
+}
+
+.invoice-body {
+  padding: 2rem;
+}
+
+.invoice-footer {
+  border-top: 1px solid #e0e0e0;
+  padding: 1.5rem 2rem;
+  margin-top: 2rem;
+  background-color: #f9f9f9;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.dark .invoice-footer {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+.invoice-table th {
+  font-weight: 600;
+  background-color: #f3f4f6;
+  padding: 0.75rem 1rem;
+}
+
+.dark .invoice-table th {
+  background-color: #374151;
+  color: #f3f4f6;
+}
+
+.invoice-table td {
+  padding: 0.75rem 1rem;
+}
+
+.invoice-total {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.dark .invoice-total {
+  background-color: #374151;
+}
