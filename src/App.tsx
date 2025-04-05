@@ -10,6 +10,7 @@ import InvoiceEditor from "./pages/InvoiceEditor";
 import ClientsPage from "./pages/ClientsPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
+import { HashRouter } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -18,7 +19,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/invoices" element={<InvoicesPage />} />
@@ -27,7 +28,7 @@ const App = () => (
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
