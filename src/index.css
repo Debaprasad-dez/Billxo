@@ -1,88 +1,109 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Billxo — Deep emerald / finance green identity */
+    --background: 140 20% 97%;
+    --foreground: 160 40% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 160 40% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 160 40% 10%;
 
-    --primary: 215 83% 38%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 160 75% 28%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 140 25% 92%;
+    --secondary-foreground: 160 40% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 140 15% 93%;
+    --muted-foreground: 160 15% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 160 70% 92%;
+    --accent-foreground: 160 75% 22%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 215 83% 38%;
+    --border: 140 20% 88%;
+    --input: 140 20% 88%;
+    --ring: 160 75% 28%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 215 83% 38%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 160 20% 98%;
+    --sidebar-foreground: 160 30% 20%;
+    --sidebar-primary: 160 75% 28%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 160 30% 93%;
+    --sidebar-accent-foreground: 160 50% 22%;
+    --sidebar-border: 140 20% 88%;
+    --sidebar-ring: 160 75% 28%;
+
+    /* Semantic status colors */
+    --status-paid: 142 76% 36%;
+    --status-paid-bg: 142 76% 94%;
+    --status-sent: 217 91% 60%;
+    --status-sent-bg: 217 100% 94%;
+    --status-overdue: 0 72% 51%;
+    --status-overdue-bg: 0 100% 95%;
+    --status-draft: 220 14% 55%;
+    --status-draft-bg: 220 14% 94%;
+    --status-partial: 38 92% 42%;
+    --status-partial-bg: 38 92% 92%;
+
+    /* Shadows — emerald-tinted */
+    --shadow-sm: 0 1px 3px 0 rgb(5 90 56 / 0.06), 0 1px 2px -1px rgb(5 90 56 / 0.05);
+    --shadow-md: 0 4px 14px -2px rgb(5 90 56 / 0.10), 0 2px 6px -2px rgb(5 90 56 / 0.06);
+    --shadow-lg: 0 10px 32px -4px rgb(5 90 56 / 0.14), 0 4px 12px -4px rgb(5 90 56 / 0.08);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 160 25% 7%;
+    --foreground: 140 20% 92%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 160 22% 10%;
+    --card-foreground: 140 20% 92%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 160 22% 10%;
+    --popover-foreground: 140 20% 92%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 160 65% 42%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 160 18% 15%;
+    --secondary-foreground: 140 20% 80%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 160 15% 15%;
+    --muted-foreground: 140 10% 52%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 160 25% 16%;
+    --accent-foreground: 160 65% 52%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 44%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 160 18% 18%;
+    --input: 160 18% 18%;
+    --ring: 160 65% 42%;
+
+    --sidebar-background: 160 25% 8%;
+    --sidebar-foreground: 140 18% 85%;
+    --sidebar-primary: 160 65% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 160 20% 14%;
+    --sidebar-accent-foreground: 160 50% 65%;
+    --sidebar-border: 160 18% 16%;
+    --sidebar-ring: 160 65% 42%;
+
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 14px -2px rgb(0 0 0 / 0.36);
+    --shadow-lg: 0 10px 32px -4px rgb(0 0 0 / 0.42);
   }
 }
 
@@ -91,237 +112,197 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
   }
-  
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Syne', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-  
+
   input[type="number"] {
     -moz-appearance: textfield;
   }
-  
+}
+
+@layer components {
+  /* Stat card */
+  .stat-card {
+    @apply rounded-xl border bg-card p-5 flex flex-col gap-2 transition-all duration-200;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .stat-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  /* Status badge */
+  .status-badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+
+  .status-badge.paid {
+    background: hsl(var(--status-paid-bg));
+    color: hsl(var(--status-paid));
+  }
+
+  .status-badge.sent {
+    background: hsl(var(--status-sent-bg));
+    color: hsl(var(--status-sent));
+  }
+
+  .status-badge.overdue {
+    background: hsl(var(--status-overdue-bg));
+    color: hsl(var(--status-overdue));
+  }
+
+  .status-badge.draft {
+    background: hsl(var(--status-draft-bg));
+    color: hsl(var(--status-draft));
+  }
+
+  .status-badge.partial {
+    background: hsl(var(--status-partial-bg));
+    color: hsl(var(--status-partial));
+  }
+  .dark .status-badge.paid    { background: hsl(142 60% 16%); color: hsl(142 70% 65%); }
+  .dark .status-badge.sent    { background: hsl(217 60% 18%); color: hsl(217 90% 72%); }
+  .dark .status-badge.overdue { background: hsl(0 55% 20%);   color: hsl(0 80% 72%); }
+  .dark .status-badge.draft   { background: hsl(220 12% 20%); color: hsl(220 12% 70%); }
+  .dark .status-badge.partial { background: hsl(38 60% 18%);  color: hsl(38 90% 65%); }
+
+  /* Dense data table */
+  .data-table { @apply w-full text-sm; }
+  .data-table thead th {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-3 py-2 text-left whitespace-nowrap;
+    background: hsl(var(--muted) / 0.5);
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .data-table tbody td { @apply px-3 py-2 border-b border-border/60; }
+  .data-table tbody tr { @apply transition-colors; }
+  .data-table tbody tr:hover { background: hsl(var(--accent) / 0.5); }
+
+  /* KPI card (denser than stat-card) */
+  .kpi-card {
+    @apply rounded-xl border bg-card p-4 flex flex-col gap-1.5 transition-all duration-200;
+    box-shadow: var(--shadow-sm);
+  }
+  .kpi-card:hover { box-shadow: var(--shadow-md); }
+
+  /* Filter chip */
+  .filter-chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer;
+    border-color: hsl(var(--border));
+    color: hsl(var(--muted-foreground));
+  }
+  .filter-chip:hover { background: hsl(var(--muted)); }
+  .filter-chip.active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+  }
+
+  /* Invoice table */
+  .invoice-table th {
+    @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground px-4 py-3;
+    background: hsl(var(--muted));
+  }
+
+  .invoice-table td {
+    @apply px-4 py-3 text-sm;
+  }
+
+  .invoice-table tr:hover {
+    background: hsl(var(--accent));
+  }
+
+  /* Print styles */
   .print-preview {
-    background-color: #fff;
+    background-color: white;
     padding: 40px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-lg);
     max-width: 800px;
     margin: 0 auto;
+    border-radius: 12px;
   }
-  
-  @media print {
-    body * {
-      visibility: hidden;
-    }
-    
-    .print-section, .print-section * {
-      visibility: visible;
-    }
-    
-    .print-section {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-    }
-    
-    .no-print {
-      display: none !important;
-    }
+
+  /* Invoice header gradient */
+  .invoice-header {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(160 75% 20%) 100%);
+    color: white;
+    padding: 2rem;
+  }
+
+  .invoice-footer {
+    border-top: 1px solid hsl(var(--border));
+    padding: 1.5rem 2rem;
+    background: hsl(var(--muted));
+  }
+
+  /* Stagger */
+  .stagger-item {
+    animation: slideUpFade 0.3s ease-out both;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  /* Recharts fixes */
+  .recharts-text {
+    fill: hsl(var(--muted-foreground)) !important;
+  }
+
+  .recharts-default-tooltip {
+    background: hsl(var(--card)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 8px !important;
+    box-shadow: var(--shadow-md) !important;
+    color: hsl(var(--card-foreground)) !important;
   }
 }
 
-/* Fix for dark mode dropdown options */
-.dark select option {
-  background-color: var(--popover);
-  color: var(--popover-foreground);
+@layer utilities {
+  .font-display {
+    font-family: 'Syne', system-ui, sans-serif;
+  }
+
+  .font-body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
 }
 
-.dark .bg-white {
-  background-color: #1f2937;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* Fix for dark mode text in dropdowns and selects */
-.dark select,
-.dark .select,
-.dark [data-radix-select-trigger] {
-  color: white;
-  background-color: var(--input);
-  border-color: var(--border);
+@keyframes slideUpFade {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
 }
 
-.dark [data-radix-select-content] {
-  background-color: var(--popover);
-  color: var(--popover-foreground);
-  border-color: var(--border);
-}
-
-.dark [data-radix-select-item] {
-  color: var(--popover-foreground);
-}
-
-.dark [data-radix-select-item]:hover {
-  background-color: var(--accent);
-}
-
-/* Dark mode fixes for client and invoice lists */
-.dark tr.hover\:bg-gray-50:hover {
-  background-color: #374151 !important; /* darker gray for hover in dark mode */
-  color: white !important;
-}
-
-.dark .bg-gray-50 {
-  background-color: #1f2937 !important; /* dark background for table headers */
-  color: white !important;
-}
-
-.dark .bg-white {
-  background-color: #111827 !important; /* dark background for tables */
-}
-
-.dark .text-gray-500 {
-  color: #9ca3af !important; /* lighter gray for text in dark mode */
-}
-
-.dark .text-gray-700 {
-  color: #e5e7eb !important; /* almost white for text in dark mode */
-}
-
-.dark .text-gray-900 {
-  color: #f3f4f6 !important; /* white for headings in dark mode */
-}
-
-/* Fix for table in dark mode */
-.dark tbody.bg-white {
-  background-color: #1f2937 !important;
-}
-
-.dark tbody.divide-gray-200 > tr {
-  border-color: #374151 !important;
-}
-
-/* Fix for tax % input overlap */
-.tax-input-container {
-  position: relative;
-}
-
-.tax-input-container input {
-  padding-right: 25px !important; /* Make more room for the % symbol */
-}
-
-.tax-percent-symbol {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-/* Professional Invoice Preview Styling */
-.invoice-preview {
-  font-family: 'Inter', sans-serif;
-}
-
-.dark .invoice-preview {
-  color: #f3f4f6 !important;
-}
-
-.dark .invoice-preview .bg-white {
-  background-color: #1f2937 !important;
-}
-
-.dark .invoice-preview .text-gray-600,
-.dark .invoice-preview .text-gray-500 {
-  color: #d1d5db !important;
-}
-
-.dark .invoice-preview .text-gray-900 {
-  color: #f9fafb !important;
-}
-
-.dark .invoice-preview .border-gray-200 {
-  border-color: #374151 !important;
-}
-
-/* Fix for charts in dark mode */
-.dark .recharts-text {
-  fill: #e5e7eb !important;
-}
-
-.dark .recharts-cartesian-grid-horizontal line,
-.dark .recharts-cartesian-grid-vertical line {
-  stroke: #374151 !important;
-}
-
-.dark .recharts-legend-item-text {
-  color: #e5e7eb !important;
-}
-
-/* Classes for professional invoice design */
-.invoice-modern {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.invoice-header {
-  background: linear-gradient(135deg, #1E88E5 0%, #1565C0 100%);
-  color: white;
-  padding: 2rem;
-  position: relative;
-}
-
-.dark .invoice-header {
-  background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-}
-
-.invoice-logo-section {
-  margin-bottom: 1.5rem;
-}
-
-.invoice-body {
-  padding: 2rem;
-}
-
-.invoice-footer {
-  border-top: 1px solid #e0e0e0;
-  padding: 1.5rem 2rem;
-  margin-top: 2rem;
-  background-color: #f9f9f9;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-.dark .invoice-footer {
-  background-color: #1f2937;
-  border-color: #374151;
-}
-
-.invoice-table th {
-  font-weight: 600;
-  background-color: #f3f4f6;
-  padding: 0.75rem 1rem;
-}
-
-.dark .invoice-table th {
-  background-color: #374151;
-  color: #f3f4f6;
-}
-
-.invoice-table td {
-  padding: 0.75rem 1rem;
-}
-
-.invoice-total {
-  background-color: #f3f4f6;
-  padding: 1rem;
-  border-radius: 8px;
-}
-
-.dark .invoice-total {
-  background-color: #374151;
+@media print {
+  body * { visibility: hidden; }
+  .print-section, .print-section * { visibility: visible; }
+  .print-section { position: absolute; left: 0; top: 0; width: 100%; }
+  .no-print { display: none !important; }
 }

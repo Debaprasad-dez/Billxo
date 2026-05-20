@@ -80,6 +80,12 @@ export default {
 					gradient3: '#4F46E5', // Indigo
 				}
 			},
+			fontFamily: {
+				display: ['Syne', 'system-ui', 'sans-serif'],
+				body: ['"DM Sans"', 'system-ui', 'sans-serif'],
+				mono: ['"JetBrains Mono"', 'monospace'],
+				sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',

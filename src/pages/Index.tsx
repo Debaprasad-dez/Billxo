@@ -1,352 +1,332 @@
 
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import useLocalStorage from '@/hooks/useLocalStorage';
-import { Invoice, InvoiceSummary } from '@/types/invoice';
-import { formatCurrency } from '@/utils/helpers';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, BarChart, Bar,
+} from 'recharts';
+import { useBilling } from '@/hooks/useBilling';
+import {
+  formatCurrency, getStatusColor, getStatusLabel, getDisplayStatus,
+  getBalance, getAmountPaid, daysBetween,
+} from '@/utils/helpers';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import {
+  Plus, TrendingUp, DollarSign, Clock, AlertTriangle, ArrowRight, Globe,
+} from 'lucide-react';
+
+const STATUS_COLORS: Record<string, string> = {
+  paid: '#10b981', sent: '#3b82f6', overdue: '#ef4444', draft: '#9ca3af', partial: '#f59e0b',
+};
 
 const Index = () => {
   const navigate = useNavigate();
-  const [storedInvoices] = useLocalStorage<Invoice[]>('invoices', []);
-  
-  // Get invoices for dashboard stats
-  const invoiceSummaries = storedInvoices.map(invoice => ({
-    id: invoice.id,
-    invoiceNumber: invoice.invoiceNumber,
-    client: {
-      name: invoice.client.name
-    },
-    createdDate: invoice.createdDate,
-    dueDate: invoice.dueDate,
-    grandTotal: invoice.grandTotal,
-    status: invoice.status
-  }));
-  
-  // Calculate statistics
-  const totalOutstanding = storedInvoices
-    .filter(inv => inv.status !== 'paid')
-    .reduce((sum, inv) => sum + inv.grandTotal, 0);
-    
-  const totalPaid = storedInvoices
-    .filter(inv => inv.status === 'paid')
-    .reduce((sum, inv) => sum + inv.grandTotal, 0);
-    
-  const overdue = storedInvoices
-    .filter(inv => inv.status === 'overdue')
-    .length;
-  
-  // Recent invoices
-  const recentInvoices = [...invoiceSummaries]
-    .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime())
-    .slice(0, 5);
-  
-  // Chart data
-  const getMonthName = (monthIndex: number) => {
-    return new Date(2000, monthIndex, 1).toLocaleString('default', { month: 'short' });
-  };
-  
-  // Generate last 6 months for chart
-  const generateLastSixMonths = () => {
-    const months = [];
-    const today = new Date();
-    
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date();
-      date.setMonth(today.getMonth() - i);
-      months.push({
-        month: getMonthName(date.getMonth()),
-        paid: 0,
-        pending: 0,
-      });
-    }
-    
-    // Fill data from invoices
-    storedInvoices.forEach(invoice => {
-      const invoiceDate = new Date(invoice.createdDate);
-      const monthIndex = months.findIndex(m => 
-        m.month === getMonthName(invoiceDate.getMonth()) &&
-        Math.abs(new Date().getMonth() - invoiceDate.getMonth()) <= 5
-      );
-      
-      if (monthIndex !== -1) {
-        if (invoice.status === 'paid') {
-          months[monthIndex].paid += invoice.grandTotal;
-        } else {
-          months[monthIndex].pending += invoice.grandTotal;
-        }
+  const { invoices } = useBilling();
+
+  const m = useMemo(() => {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const withStatus = invoices.map(i => ({ inv: i, status: getDisplayStatus(i), balance: getBalance(i), paid: getAmountPaid(i) }));
+
+    const outstanding = withStatus.reduce((s, x) => s + x.balance, 0);
+    const overdueAmt = withStatus.filter(x => x.status === 'overdue').reduce((s, x) => s + x.balance, 0);
+    const overdueCount = withStatus.filter(x => x.status === 'overdue').length;
+    const paidMTD = invoices.flatMap(i => i.payments ?? [])
+      .filter(p => new Date(p.date) >= monthStart)
+      .reduce((s, p) => s + p.amount, 0);
+
+    // multi-currency breakdown
+    const byCurrency = new Map<string, { billed: number; collected: number; outstanding: number }>();
+    invoices.forEach(i => {
+      const cur = i.currency || '$';
+      const entry = byCurrency.get(cur) ?? { billed: 0, collected: 0, outstanding: 0 };
+      entry.billed += i.grandTotal;
+      entry.collected += getAmountPaid(i);
+      entry.outstanding += getBalance(i);
+      byCurrency.set(cur, entry);
+    });
+    const currencyBreakdown = [...byCurrency.entries()].map(([cur, v]) => ({ cur, ...v })).sort((a, b) => b.billed - a.billed);
+
+    // avg days to pay (fully paid invoices)
+    const payDurations: number[] = [];
+    invoices.forEach(i => {
+      const paid = getAmountPaid(i);
+      if (paid >= i.grandTotal && (i.payments?.length)) {
+        const last = i.payments!.reduce((a, b) => new Date(a.date) > new Date(b.date) ? a : b);
+        payDurations.push(Math.max(0, daysBetween(i.createdDate, last.date)));
       }
     });
-    
-    return months;
-  };
-  
-  const chartData = generateLastSixMonths();
-  
-  // Status distribution data for pie chart
-  const statusCounts = {
-    paid: storedInvoices.filter(inv => inv.status === 'paid').length,
-    sent: storedInvoices.filter(inv => inv.status === 'sent').length,
-    overdue: storedInvoices.filter(inv => inv.status === 'overdue').length,
-    draft: storedInvoices.filter(inv => inv.status === 'draft').length,
-  };
-  
-  const pieData = [
-    { name: 'Paid', value: statusCounts.paid },
-    { name: 'Sent', value: statusCounts.sent },
-    { name: 'Overdue', value: statusCounts.overdue },
-    { name: 'Draft', value: statusCounts.draft },
-  ].filter(item => item.value > 0);
-  
-  // Enhanced chart colors
-  const COLORS = ['#4ade80', '#60a5fa', '#f87171', '#d1d5db'];
-  
-  // Custom tooltip formatter for currency
-  const currencyFormatter = (value: number) => formatCurrency(value);
-  
+    const avgDays = payDurations.length ? Math.round(payDurations.reduce((a, b) => a + b, 0) / payDurations.length) : 0;
+
+    // 6-month revenue (collected from payments)
+    const months: { month: string; collected: number; billed: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ month: d.toLocaleString('default', { month: 'short' }), collected: 0, billed: 0 });
+    }
+    const monthIdx = (iso: string) => {
+      const d = new Date(iso);
+      return months.findIndex((_, k) => {
+        const md = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
+        return d.getFullYear() === md.getFullYear() && d.getMonth() === md.getMonth();
+      });
+    };
+    invoices.forEach(i => {
+      const bi = monthIdx(i.createdDate);
+      if (bi >= 0) months[bi].billed += i.grandTotal;
+      (i.payments ?? []).forEach(p => {
+        const pi = monthIdx(p.date);
+        if (pi >= 0) months[pi].collected += p.amount;
+      });
+    });
+
+    // status breakdown
+    const statusCounts: Record<string, number> = {};
+    withStatus.forEach(x => { statusCounts[x.status] = (statusCounts[x.status] ?? 0) + 1; });
+    const pie = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
+
+    // aging buckets (unpaid balances)
+    const buckets = [
+      { label: 'Current', min: -99999, max: 0, amount: 0 },
+      { label: '1-30d', min: 1, max: 30, amount: 0 },
+      { label: '31-60d', min: 31, max: 60, amount: 0 },
+      { label: '60d+', min: 61, max: 99999, amount: 0 },
+    ];
+    withStatus.filter(x => x.balance > 0 && x.status !== 'draft').forEach(x => {
+      const overdueDays = daysBetween(x.inv.dueDate, now.toISOString());
+      const b = buckets.find(bk => overdueDays >= bk.min && overdueDays <= bk.max) ?? buckets[0];
+      b.amount += x.balance;
+    });
+
+    // top clients by collected
+    const clientTotals = new Map<string, number>();
+    invoices.forEach(i => {
+      const collected = getAmountPaid(i);
+      if (collected > 0) clientTotals.set(i.client.name, (clientTotals.get(i.client.name) ?? 0) + collected);
+    });
+    const topClients = [...clientTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+    const recent = [...invoices]
+      .sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime())
+      .slice(0, 7);
+
+    return { outstanding, overdueAmt, overdueCount, paidMTD, avgDays, months, pie, buckets, topClients, recent, withStatus, currencyBreakdown };
+  }, [invoices]);
+
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+  const tick = isDark ? '#9ca3af' : '#6b7280';
+  const grid = isDark ? '#1f2937' : '#eef2f0';
+
+  const kpis = [
+    { label: 'Outstanding', value: formatCurrency(m.outstanding), icon: DollarSign, accent: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Overdue', value: formatCurrency(m.overdueAmt), sub: `${m.overdueCount} invoice${m.overdueCount !== 1 ? 's' : ''}`, icon: AlertTriangle, accent: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-950/40' },
+    { label: 'Collected (MTD)', value: formatCurrency(m.paidMTD), icon: TrendingUp, accent: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+    { label: 'Avg. Days to Pay', value: `${m.avgDays}d`, icon: Clock, accent: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+  ];
+
   return (
     <AppLayout>
-      <div>
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <Button onClick={() => navigate('/invoice/new')}>
-            <Plus className="mr-2 h-4 w-4" /> New Invoice
+      <div className="max-w-7xl space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">{invoices.length} invoices · {formatCurrency(m.withStatus.reduce((s, x) => s + x.inv.grandTotal, 0))} billed</p>
+          </div>
+          <Button onClick={() => navigate('/invoice/new')} size="sm" className="gap-1.5 rounded-lg font-display font-semibold">
+            <Plus size={15} /> New Invoice
           </Button>
         </div>
-        
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold dark:text-white">{formatCurrency(totalOutstanding)}</div>
-              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Outstanding Balance</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totalPaid)}</div>
-              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Total Paid</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold dark:text-white">{invoiceSummaries.length}</div>
-              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Total Invoices</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200">
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-500">{overdue}</div>
-              <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Overdue Invoices</p>
-            </CardContent>
-          </Card>
+
+        {/* KPIs */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {kpis.map(({ label, value, sub, icon: Icon, accent, bg }, i) => (
+            <div key={label} className="kpi-card stagger-item" style={{ animationDelay: `${i * 40}ms` }}>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+                <div className={`w-7 h-7 rounded-lg ${bg} flex items-center justify-center`}>
+                  <Icon size={14} className={accent} />
+                </div>
+              </div>
+              <p className={`font-display text-xl font-bold ${accent}`}>{value}</p>
+              {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+            </div>
+          ))}
         </div>
-        
+
+        {/* Multi-currency breakdown */}
+        {m.currencyBreakdown.length > 1 && (
+          <div className="rounded-xl border bg-card p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+            <h2 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-2"><Globe size={14} /> Multi-Currency Breakdown</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {m.currencyBreakdown.map(c => (
+                <div key={c.cur} className="rounded-lg bg-muted/50 px-3 py-2.5 space-y-1">
+                  <span className="text-xs font-semibold text-primary">{c.cur}</span>
+                  <div className="flex justify-between text-[11px] text-muted-foreground"><span>Billed</span><span className="font-mono font-semibold text-foreground">{formatCurrency(c.billed, c.cur)}</span></div>
+                  <div className="flex justify-between text-[11px] text-muted-foreground"><span>Collected</span><span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{formatCurrency(c.collected, c.cur)}</span></div>
+                  <div className="flex justify-between text-[11px] text-muted-foreground"><span>Outstanding</span><span className="font-mono font-semibold text-amber-600 dark:text-amber-400">{formatCurrency(c.outstanding, c.cur)}</span></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Line Chart */}
-          <Card className="col-span-2 shadow-sm hover:shadow transition-shadow duration-200">
-            <CardHeader>
-              <CardTitle className="dark:text-white">Invoice Activity</CardTitle>
-            </CardHeader>
-            <CardContent className="h-80">
-              {chartData.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 rounded-xl border bg-card p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display text-sm font-semibold text-foreground">Cash Flow</h2>
+              <div className="flex items-center gap-3 text-[11px]">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Collected</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400" /> Billed</span>
+              </div>
+            </div>
+            <div className="h-56">
+              {m.months.some(d => d.collected || d.billed) ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={chartData}
-                    margin={{
-                      top: 5,
-                      right: 30,
-                      left: 20,
-                      bottom: 5,
-                    }}
-                  >
+                  <AreaChart data={m.months} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="paidGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#4ade80" stopOpacity={0.2}/>
+                      <linearGradient id="gC" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
-                      <linearGradient id="pendingGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f87171" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#f87171" stopOpacity={0.2}/>
+                      <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2} />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="month" 
-                      stroke="#9ca3af" 
-                      tick={{fill: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#6b7280'}}
-                    />
-                    <YAxis 
-                      stroke="#9ca3af" 
-                      tick={{fill: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#6b7280'}}
-                      tickFormatter={currencyFormatter}
-                    />
-                    <Tooltip 
-                      formatter={(value) => [`${formatCurrency(value as number)}`, '']}
-                      contentStyle={{
-                        backgroundColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
-                        borderColor: document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb',
-                        color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#111827'
-                      }}
-                    />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      name="Paid" 
-                      dataKey="paid" 
-                      stroke="#4ade80" 
-                      strokeWidth={3}
-                      dot={{ stroke: '#4ade80', strokeWidth: 2, r: 4, fill: 'white' }}
-                      activeDot={{ r: 6, stroke: '#4ade80', strokeWidth: 2, fill: 'white' }}
-                      fillOpacity={1}
-                      fill="url(#paidGradient)"
-                    />
-                    <Line 
-                      type="monotone" 
-                      name="Pending" 
-                      dataKey="pending" 
-                      stroke="#f87171" 
-                      strokeWidth={3}
-                      dot={{ stroke: '#f87171', strokeWidth: 2, r: 4, fill: 'white' }}
-                      activeDot={{ r: 6, stroke: '#f87171', strokeWidth: 2, fill: 'white' }}
-                      fillOpacity={1}
-                      fill="url(#pendingGradient)"
-                    />
-                  </LineChart>
+                    <CartesianGrid strokeDasharray="3 3" stroke={grid} vertical={false} />
+                    <XAxis dataKey="month" tick={{ fill: tick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: tick, fontSize: 10 }} axisLine={false} tickLine={false} width={48} tickFormatter={v => formatCurrency(v)} />
+                    <Tooltip formatter={(v) => formatCurrency(v as number)} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                    <Area type="monotone" dataKey="billed" stroke="#3b82f6" strokeWidth={2} fill="url(#gB)" />
+                    <Area type="monotone" dataKey="collected" stroke="#10b981" strokeWidth={2.5} fill="url(#gC)" />
+                  </AreaChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                  No invoice data to display
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          {/* Pie Chart */}
-          <Card className="shadow-sm hover:shadow transition-shadow duration-200">
-            <CardHeader>
-              <CardTitle className="dark:text-white">Invoice Status</CardTitle>
-            </CardHeader>
-            <CardContent className="h-80">
-              {pieData.length > 0 ? (
+              ) : <Empty />}
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-card p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+            <h2 className="font-display text-sm font-semibold text-foreground mb-3">By Status</h2>
+            <div className="h-56">
+              {m.pie.length ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="45%"
-                      labelLine={false}
-                      outerRadius={80}
-                      innerRadius={40} // Added innerRadius for donut chart effect
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      stroke={document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff'}
-                      strokeWidth={2}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={COLORS[index % COLORS.length]}
-                          style={{ filter: 'drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.1))' }}
-                        />
-                      ))}
+                    <Pie data={m.pie} cx="50%" cy="50%" outerRadius={72} innerRadius={42} dataKey="value" paddingAngle={2} stroke="hsl(var(--background))" strokeWidth={2}>
+                      {m.pie.map((d, i) => <Cell key={i} fill={STATUS_COLORS[d.name] ?? '#9ca3af'} />)}
                     </Pie>
-                    <Legend 
-                      verticalAlign="bottom" 
-                      height={36} 
-                      formatter={(value) => (
-                        <span style={{ color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#111827' }}>
-                          {value}
-                        </span>
-                      )}
-                    />
-                    <Tooltip 
-                      formatter={(value) => [value, '']}
-                      contentStyle={{
-                        backgroundColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff',
-                        borderColor: document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb',
-                        color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#111827'
-                      }}
-                    />
+                    <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                  No invoices created yet
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              ) : <Empty />}
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center mt-1">
+              {m.pie.map(d => (
+                <span key={d.name} className="flex items-center gap-1 text-[11px] text-muted-foreground capitalize">
+                  <span className="w-2 h-2 rounded-full" style={{ background: STATUS_COLORS[d.name] }} /> {d.name} ({d.value})
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
-        
-        {/* Recent Invoices */}
-        <Card className="shadow-sm hover:shadow transition-shadow duration-200">
-          <CardHeader>
-            <CardTitle className="dark:text-white">Recent Invoices</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentInvoices.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-300 bg-gray-50 dark:bg-gray-800">
-                    <tr>
-                      <th className="px-4 py-3 text-left">Invoice #</th>
-                      <th className="px-4 py-3 text-left">Client</th>
-                      <th className="px-4 py-3 text-left">Date</th>
-                      <th className="px-4 py-3 text-left">Amount</th>
-                      <th className="px-4 py-3 text-left">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {recentInvoices.map((invoice) => (
-                      <tr 
-                        key={invoice.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150"
-                        onClick={() => navigate(`/invoice/${invoice.id}`)}
-                      >
-                        <td className="px-4 py-3 dark:text-gray-200">{invoice.invoiceNumber}</td>
-                        <td className="px-4 py-3 dark:text-gray-200">{invoice.client.name}</td>
-                        <td className="px-4 py-3 dark:text-gray-200">{new Date(invoice.createdDate).toLocaleDateString()}</td>
-                        <td className="px-4 py-3 dark:text-gray-200">{formatCurrency(invoice.grandTotal)}</td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            invoice.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 
-                            invoice.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 
-                            invoice.status === 'sent' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' : 
-                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                          }`}>
-                            {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                          </span>
-                        </td>
+
+        {/* Aging + Top clients */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 rounded-xl border bg-card p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+            <h2 className="font-display text-sm font-semibold text-foreground mb-3">Receivables Aging</h2>
+            <div className="h-48">
+              {m.buckets.some(b => b.amount > 0) ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={m.buckets} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={grid} vertical={false} />
+                    <XAxis dataKey="label" tick={{ fill: tick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: tick, fontSize: 10 }} axisLine={false} tickLine={false} width={48} tickFormatter={v => formatCurrency(v)} />
+                    <Tooltip formatter={(v) => formatCurrency(v as number)} cursor={{ fill: 'hsl(var(--muted) / 0.4)' }} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+                    <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
+                      {m.buckets.map((_, i) => <Cell key={i} fill={['#10b981', '#3b82f6', '#f59e0b', '#ef4444'][i]} />)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <Empty label="No outstanding receivables" />}
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-card p-4" style={{ boxShadow: 'var(--shadow-sm)' }}>
+            <h2 className="font-display text-sm font-semibold text-foreground mb-3">Top Clients</h2>
+            {m.topClients.length ? (
+              <div className="space-y-2.5">
+                {m.topClients.map(([name, total], i) => (
+                  <div key={name} className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                      {name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-sm text-foreground truncate flex-1">{name}</span>
+                    <span className="font-mono text-xs font-semibold text-foreground">{formatCurrency(total)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-xs text-muted-foreground py-8 text-center">No payments recorded yet</p>}
+          </div>
+        </div>
+
+        {/* Recent invoices */}
+        <div className="rounded-xl border bg-card overflow-hidden" style={{ boxShadow: 'var(--shadow-sm)' }}>
+          <div className="flex items-center justify-between px-4 py-3 border-b">
+            <h2 className="font-display text-sm font-semibold text-foreground">Recent Invoices</h2>
+            <button onClick={() => navigate('/invoices')} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors">
+              View all <ArrowRight size={12} />
+            </button>
+          </div>
+          {m.recent.length ? (
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Invoice #</th><th>Client</th><th className="hidden sm:table-cell">Date</th>
+                    <th className="text-right">Total</th><th className="text-right hidden md:table-cell">Balance</th><th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {m.recent.map(inv => {
+                    const st = getDisplayStatus(inv);
+                    const bal = getBalance(inv);
+                    return (
+                      <tr key={inv.id} className="cursor-pointer" onClick={() => navigate(`/invoice/${inv.id}`)}>
+                        <td className="font-mono text-xs text-muted-foreground">{inv.invoiceNumber}</td>
+                        <td className="font-medium text-foreground">{inv.client.name}</td>
+                        <td className="hidden sm:table-cell text-muted-foreground text-xs">{new Date(inv.createdDate).toLocaleDateString()}</td>
+                        <td className="text-right font-mono font-semibold text-foreground">{formatCurrency(inv.grandTotal, inv.currency)}</td>
+                        <td className="text-right font-mono text-xs hidden md:table-cell text-muted-foreground">{bal > 0 ? formatCurrency(bal, inv.currency) : '—'}</td>
+                        <td><span className={getStatusColor(st)}>{getStatusLabel(st)}</span></td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-14 text-center px-6">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                <Plus size={20} className="text-primary" />
               </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                No invoices created yet. Create your first invoice to get started.
-              </div>
-            )}
-            
-            {recentInvoices.length > 0 && (
-              <div className="flex justify-center mt-4">
-                <Button variant="outline" onClick={() => navigate('/invoices')}>
-                  View All Invoices
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              <h3 className="font-display font-semibold text-foreground mb-1 text-sm">No invoices yet</h3>
+              <p className="text-xs text-muted-foreground mb-4 max-w-xs">Create your first invoice to start tracking revenue.</p>
+              <Button size="sm" onClick={() => navigate('/invoice/new')} className="gap-1.5 rounded-lg">
+                <Plus size={14} /> Create Invoice
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </AppLayout>
   );
 };
+
+const Empty = ({ label = 'No data yet' }: { label?: string }) => (
+  <div className="flex items-center justify-center h-full text-muted-foreground text-xs">{label}</div>
+);
 
 export default Index;
